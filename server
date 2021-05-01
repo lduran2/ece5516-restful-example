@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+// ./server
+// Creates a server that allows reading and updating the number of
+// students at any school at Temple.
+//
+// By        : Leomar Durán <https://github.com/lduran2/>
+// When      : 2021-05-01t02:44
+// For       : ECE 5516
+// Version   : 1.0
+//
+// Changelog :
+//	v1.0 - 2021-05-01t02:44
+//		started working on the server for reading
+//
+
+let fs = require('fs');	// for readFile
+
+// create the server app
+let app = require('express')();
+
+// #port to listen to
+const PORT_NO = 8080;
+// OK header status
+const HEADER_OK = 200;
+// plain text content type to send
+const PLAIN_TEXT_CONTENT = { 'Content-Type' : 'text/plain' };
+
+// set up the app's behavior
+app.get('/list-students/', function (_, response) {
+	console.log('requested /list-students/');
+	// open the students file
+	fs.readFile('students.json', 'utf8',
+		function onFileRead(err, data) {
+			// log error and stop if error
+			if (err) return console.error(err);
+			console.log('read students.json');
+			// send plain text with OK status header
+			response.writeHead(HEADER_OK, PLAIN_TEXT_CONTENT);
+			// send the data read
+			response.end(data.toString());
+			console.log('sent the response');
+		} // function onFileRead(err, data)
+	); // fs.readFile('students.json' ..
+}); // app.get('/list-students/' ..
+
+// start the server's listening
+let server = app.listen(PORT_NO, function () {
+	// report the host address and port
+	let host = server.address().address;
+	let port = server.address().port;
+	console.log('student app listening at http://%s:%s . . .',
+		host, port
+	);
+});
+
+console.log('Done.')
+

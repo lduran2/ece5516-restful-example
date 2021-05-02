@@ -4,11 +4,20 @@
 // students at any school at Temple.
 //
 // By        : Leomar Durán <https://github.com/lduran2/>
-// When      : 2021-05-01t02:44
+// When      : 2021-05-01t23:19
 // For       : ECE 5516
-// Version   : 1.0
+// Version   : 1.3
 //
 // Changelog :
+//	v1.3 - 2021-05-01t23:19
+//		used handleReadMoreFiles to simplify get index
+//
+//	v1.2 - 2021-05-01t21:56
+//		used handleReadFile to handle errors, logging
+//
+//	v1.1 - 2021-05-01t02:44
+//		serving index to choose read or update
+//
 //	v1.0 - 2021-05-01t02:44
 //		started working on the server for reading
 //
@@ -26,57 +35,41 @@ const HEADER_OK = 200;
 const PLAIN_TEXT_CONTENT = { 'Content-Type' : 'text/plain' };
 const HYPER_TEXT_CONTENT = { 'Content-Type' : 'text/html' };
 
+// set up app's get index
 app.get('/', function (_, response) {
 	console.log('requested /');
-	//open the index file
-	fs.readFile('index.html', 'utf8', function (err, index) {
-		// log error and stop if error
-		if (err) return console.error(err);
-		console.log('read index.html');
-		// open the students file
-		fs.readFile('students.json', 'utf8',
-			function (err, rStudents) {
-				// log error and stop if error
-				if (err) return console.error(err);
-				console.log('read students.json');
-				fs.readFile('school-option-template.html', 'utf8',
-					function (err, option) {
-						// log error and stop if error
-						if (err) return console.error(err);
-						console.log('read school-option-template.html');
-						// option templating, replace each $school_name in option
-						let template = String.prototype.replace.bind(option, /\$school_name/g);
-						// parse the option template
-						let content = index				// in the index file,
-							.replace(/\$schools/g,			// replace each $schools
-								Object.keys(			// with each key
-									JSON.parse(rStudents))	// in the parsed students,
-								.map(template)			// templated,
-								.join(''))			// joined as 1 string
-						;
-						// send plain text with OK status header
-						response.writeHead(HEADER_OK, HYPER_TEXT_CONTENT);
-						// send the data read
-						response.end(content);
-						console.log('sent the response');
-					}
-				);
-			}
-		);
-	}); // fs.readFile('students.json' ..
-});
+	// open the index, students and template files
+	handleReadMoreFiles(['index.html', 'students.json', 'school-option-template.html'], [], [],
+		function onReadingforIndex(_, index, students, option) {
+			// option templating, replace each $school_name in option
+			let template = String.prototype.replace.bind(option, /\$school_name/g);
+			// parse the option template
+			let content = index				// in the index file,
+				.replace(/\$schools/g,			// replace each $schools
+					Object.keys(			// with each key
+						JSON.parse(students))	// in the parsed students,
+					.map(template)			// templated,
+					.join(''))			// joined as 1 string
+			;
+			// send plain text with OK status header
+			response.writeHead(HEADER_OK, HYPER_TEXT_CONTENT);
+			// send the data read
+			response.end(content);
+		} // function onReadingforIndex(err, index, students, option) */
+	); // handleReadMoreFiles(['index.html', ... 
+}); // app.get('/', ..
 
-// set up the app's behavior
+// set up the app's get /list-students/
 app.get('/list-students/', function (_, response) {
 	console.log('requested /list-students/');
 	// open and read the students file
-	handleReadFile('students.json', function (err, data) {
+	handleReadFile('students.json', function (_, data) {
 		// send plain text with OK status header
 		response.writeHead(HEADER_OK, PLAIN_TEXT_CONTENT);
 		// send the data read
 		response.end(data.toString());
 	}); // handleReadFile('students.json', ...
-}); // app.get('/list-students/' ..
+}); // app.get('/list-students/', ..
 
 // start the server's listening
 let server = app.listen(PORT_NO, function () {
@@ -90,7 +83,7 @@ let server = app.listen(PORT_NO, function () {
 
 console.log('Done.');
 
-/// handles errors, logging while reading files
+/// handles errors, logging while reading a file
 function handleReadFile(file, callback) {
 	// open and read the file
 	fs.readFile(file, 'utf8', function (err, data) {
@@ -101,4 +94,25 @@ function handleReadFile(file, callback) {
 		console.log('sent the response');
 	}); // fs.readFile(file, ...
 } // function handleReadFile(file, callback)
+
+/// handles errors, logging while reading all files in array files
+function handleReadMoreFiles(files, errArr, dataArr, callback) {
+	// shift file 0
+	let file0 = files.shift();
+
+	// base case: if file 0 defined
+	if (!file0) {
+		// if no file 0, then callback
+		return callback(errArr, ...dataArr);
+	} // if (!file0)
+
+	// inductive step: read the file
+	handleReadFile(file0, function (err, data) {
+		// push the error message and data
+		errArr.push(err);
+		dataArr.push(data);
+		// read the next file
+		handleReadMoreFiles(files, errArr, dataArr, callback);
+	}); // handleReadFile(file0, ...
+} // function handleReadMoreFiles(files, errArr, dataArr, callback)
 

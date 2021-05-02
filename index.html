@@ -28,19 +28,28 @@
 			<form action='/update-students/' name='update-students'>
 				<ol>
 					<li>
-						<label>School
-							<select name=
-								'school'
-							>$schools</select>
-						</label>
+						<fieldset>
+							<legend>Schools</legend>
+							<ol>
+								<li>
+									<label>Existing school<select name='school'>
+										$schools
+										<option value='other'>new school</option>
+									</select></label>
+								</li>
+								<li>
+									<label>New school<input
+										name='other-school'
+									/></label>
+								</li>
+							</ol>
+						</fieldset>
 					</li>
 					<li>
-						<label>Number of students
-							<input name=
-								'n_students'
-							       value='2400'
-							/>
-						</label>
+						<label>Number of students<input
+							name='n_students'
+							value='2400'
+						/></label>
 					</li>
 					<li>
 						<button type='submit'

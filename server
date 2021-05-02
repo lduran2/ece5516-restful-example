@@ -4,11 +4,14 @@
 // students at any school at Temple.
 //
 // By        : Leomar Durán <https://github.com/lduran2/>
-// When      : 2021-05-02t05:32
+// When      : 2021-05-02t14:37
 // For       : ECE 5516
-// Version   : 1.4
+// Version   : 1.4.1
 //
 // Changelog :
+// 	v1.4 - 2021-05-02t14:37
+// 		charset for all content-types
+//
 // 	v1.4 - 2021-05-02t05:32
 // 		PUT can update or add a new school
 // 		implemented PUT to update the number of students per school
@@ -45,8 +48,8 @@ const PORT_NO = 8080;
 const HEADER_OK = 200;
 const HEADER_CREATED = 201;
 // types of content to send
-const PLAIN_TEXT_CONTENT = { 'Content-Type' : 'text/plain' };
-const HYPER_TEXT_CONTENT = { 'Content-Type' : 'text/html' };
+const PLAIN_TEXT_CONTENT = { 'Content-Type' : 'text/plain; charset=UTF-8' };
+const HYPER_TEXT_CONTENT = { 'Content-Type' : 'text/html; charset=UTF-8' };
 const JAVASCRIPT_CONTENT = { 'Content-Type' : 'text/javascript' };
 
 // set up APP's get index
@@ -89,7 +92,7 @@ APP.put('/update-students/', function (request, response) {
 		// get the school from the request
 		const SCHOOL = request.body['school'];
 		// check if the school already exists for response status
-		const HEADER_STATUS = (PDATA.hasOwnProperty(SCHOOL) ? HEADER_OK : HEADER_CREATE);
+		const HEADER_STATUS = (PDATA.hasOwnProperty(SCHOOL) ? HEADER_OK : HEADER_CREATED);
 		// update that school in the student data
 		PDATA[SCHOOL] = request.body['n_students'];
 		// write the updated data

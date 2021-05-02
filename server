@@ -69,17 +69,13 @@ app.get('/', function (_, response) {
 // set up the app's behavior
 app.get('/list-students/', function (_, response) {
 	console.log('requested /list-students/');
-	// open the students file
-	fs.readFile('students.json', 'utf8', function (err, data) {
-		// log error and stop if error
-		if (err) return console.error(err);
-		console.log('read students.json');
+	// open and read the students file
+	handleReadFile('students.json', function (err, data) {
 		// send plain text with OK status header
 		response.writeHead(HEADER_OK, PLAIN_TEXT_CONTENT);
 		// send the data read
 		response.end(data.toString());
-		console.log('sent the response');
-	}); // fs.readFile('students.json' ..
+	}); // handleReadFile('students.json', ...
 }); // app.get('/list-students/' ..
 
 // start the server's listening
@@ -92,5 +88,17 @@ let server = app.listen(PORT_NO, function () {
 	);
 });
 
-console.log('Done.')
+console.log('Done.');
+
+/// handles errors, logging while reading files
+function handleReadFile(file, callback) {
+	// open and read the file
+	fs.readFile(file, 'utf8', function (err, data) {
+		// log error and stop if error
+		if (err) return console.error(err);
+		console.log('read', file);
+		callback(err, data);
+		console.log('sent the response');
+	}); // fs.readFile(file, ...
+} // function handleReadFile(file, callback)
 

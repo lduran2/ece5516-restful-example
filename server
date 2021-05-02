@@ -22,25 +22,64 @@ let app = require('express')();
 const PORT_NO = 8080;
 // OK header status
 const HEADER_OK = 200;
-// plain text content type to send
+// plain text and hypertext content type to send
 const PLAIN_TEXT_CONTENT = { 'Content-Type' : 'text/plain' };
+const HYPER_TEXT_CONTENT = { 'Content-Type' : 'text/html' };
+
+app.get('/', function (_, response) {
+	console.log('requested /');
+	//open the index file
+	fs.readFile('index.html', 'utf8', function (err, index) {
+		// log error and stop if error
+		if (err) return console.error(err);
+		console.log('read index.html');
+		// open the students file
+		fs.readFile('students.json', 'utf8',
+			function (err, rStudents) {
+				// log error and stop if error
+				if (err) return console.error(err);
+				console.log('read students.json');
+				fs.readFile('school-option-template.html', 'utf8',
+					function (err, option) {
+						// log error and stop if error
+						if (err) return console.error(err);
+						console.log('read school-option-template.html');
+						// option templating, replace each $school_name in option
+						let template = String.prototype.replace.bind(option, /\$school_name/g);
+						// parse the option template
+						let content = index				// in the index file,
+							.replace(/\$schools/g,			// replace each $schools
+								Object.keys(			// with each key
+									JSON.parse(rStudents))	// in the parsed students,
+								.map(template)			// templated,
+								.join(''))			// joined as 1 string
+						;
+						// send plain text with OK status header
+						response.writeHead(HEADER_OK, HYPER_TEXT_CONTENT);
+						// send the data read
+						response.end(content);
+						console.log('sent the response');
+					}
+				);
+			}
+		);
+	}); // fs.readFile('students.json' ..
+});
 
 // set up the app's behavior
 app.get('/list-students/', function (_, response) {
 	console.log('requested /list-students/');
 	// open the students file
-	fs.readFile('students.json', 'utf8',
-		function onFileRead(err, data) {
-			// log error and stop if error
-			if (err) return console.error(err);
-			console.log('read students.json');
-			// send plain text with OK status header
-			response.writeHead(HEADER_OK, PLAIN_TEXT_CONTENT);
-			// send the data read
-			response.end(data.toString());
-			console.log('sent the response');
-		} // function onFileRead(err, data)
-	); // fs.readFile('students.json' ..
+	fs.readFile('students.json', 'utf8', function (err, data) {
+		// log error and stop if error
+		if (err) return console.error(err);
+		console.log('read students.json');
+		// send plain text with OK status header
+		response.writeHead(HEADER_OK, PLAIN_TEXT_CONTENT);
+		// send the data read
+		response.end(data.toString());
+		console.log('sent the response');
+	}); // fs.readFile('students.json' ..
 }); // app.get('/list-students/' ..
 
 // start the server's listening

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+	<meta charset='utf-8'/>
+	<title>ECE 5516 RESTful API example</title>
+</head>
+<body>
+	<header>
+		<h1>ECE 5516 RESTful API example</h1>
+	</header>
+	<p>
+		An example of a RESTful API using <code>GET</code> and
+		<code>PUT</code> to read and update a list of students
+		per school.
+	</p>
+	<section id='get'>
+		<header>
+			<h2><code>GET</code> example</h2>
+		</header>
+		<p>
+			<a href='/list-students/'>Get students per
+			school.</a>
+		</p>
+	</section>
+	<section id='put'>
+		<header>
+			<h2><code>PUT</code> example</h2>
+			<form action='?' name='update-students'>
+				<ol>
+					<li>
+						<label>School
+							<select name=
+								'school'
+							>$schools</select>
+						</label>
+					</li>
+					<li>
+						<label>Number of students
+							<input name=
+								'n_students'
+							       value='2400'
+							/>
+						</label>
+					</li>
+					<li>
+						<button type='submit'
+						><code>PUT</code></button>
+					</li>
+				</ol>
+				<script type='text/javascript'
+					src='update-students.js'></script>
+			</form>
+		</header>
+	</section>
+</body>
+</html>

@@ -4,82 +4,116 @@
 // students at any school at Temple.
 //
 // By        : Leomar Durán <https://github.com/lduran2/>
-// When      : 2021-05-01t23:19
+// When      : 2021-05-02t05:32
 // For       : ECE 5516
-// Version   : 1.3
+// Version   : 1.4
 //
 // Changelog :
+// 	v1.4 - 2021-05-02t05:32
+// 		PUT can update or add a new school
+// 		implemented PUT to update the number of students per school
+// 		use const where possible, also 'use strict'
+// 		abstacted readtoEndon
+//
 //	v1.3 - 2021-05-01t23:19
 //		used handleReadMoreFiles to simplify get index
 //
 //	v1.2 - 2021-05-01t21:56
 //		used handleReadFile to handle errors, logging
 //
-//	v1.1 - 2021-05-01t02:44
+//	v1.1 - 2021-05-01t21:49
 //		serving index to choose read or update
 //
 //	v1.0 - 2021-05-01t02:44
 //		started working on the server for reading
 //
 
-let fs = require('fs');	// for readFile
+'use strict';
+
+const fs = require('fs');			// for readFile
+const bodyParser = require('body-parser');	// for json, urlencoded
 
 // create the server app
-let app = require('express')();
+const APP = require('express')();
+APP.readtoEndon = setReadtoEndon;
+APP.use(bodyParser.json());
+APP.use(bodyParser.urlencoded({ extended: true }));
 
 // #port to listen to
 const PORT_NO = 8080;
-// OK header status
+// OK and created header statuses
 const HEADER_OK = 200;
-// plain text and hypertext content type to send
+const HEADER_CREATED = 201;
+// types of content to send
 const PLAIN_TEXT_CONTENT = { 'Content-Type' : 'text/plain' };
 const HYPER_TEXT_CONTENT = { 'Content-Type' : 'text/html' };
+const JAVASCRIPT_CONTENT = { 'Content-Type' : 'text/javascript' };
 
-// set up app's get index
-app.get('/', function (_, response) {
+// set up APP's get index
+APP.get('/', function (_, response) {
 	console.log('requested /');
 	// open the index, students and template files
 	handleReadMoreFiles(['index.html', 'students.json', 'school-option-template.html'], [], [],
 		function onReadingforIndex(_, index, students, option) {
 			// option templating, replace each $school_name in option
-			let template = String.prototype.replace.bind(option, /\$school_name/g);
+			const TEMPLATE = String.prototype.replace.bind(option, /\$school_name/g);
 			// parse the option template
-			let content = index				// in the index file,
+			const CONTENT = index				// in the index file,
 				.replace(/\$schools/g,			// replace each $schools
 					Object.keys(			// with each key
 						JSON.parse(students))	// in the parsed students,
-					.map(template)			// templated,
+					.map(TEMPLATE)			// templated,
 					.join(''))			// joined as 1 string
 			;
 			// send plain text with OK status header
 			response.writeHead(HEADER_OK, HYPER_TEXT_CONTENT);
 			// send the data read
-			response.end(content);
+			response.end(CONTENT);
 		} // function onReadingforIndex(err, index, students, option) */
 	); // handleReadMoreFiles(['index.html', ... 
-}); // app.get('/', ..
+}); // APP.get('/', ..
 
-// set up the app's get /list-students/
-app.get('/list-students/', function (_, response) {
-	console.log('requested /list-students/');
-	// open and read the students file
-	handleReadFile('students.json', function (_, data) {
-		// send plain text with OK status header
-		response.writeHead(HEADER_OK, PLAIN_TEXT_CONTENT);
-		// send the data read
-		response.end(data.toString());
+// set up the APP's get /list-students/ and /update-students.js
+APP.readtoEndon(APP.get, '/list-students/', 'students.json', PLAIN_TEXT_CONTENT);
+APP.readtoEndon(APP.get, '/add-update-students.js', 'add-update-students.js', JAVASCRIPT_CONTENT);
+
+APP.put('/update-students/', function (request, response) {
+	console.log('requested /update-students/');
+	console.log('received', request.body);
+	// parse the request body
+	console.log(request.body);
+	// open and read student file
+	handleReadFile('students.json', function (err, rData) {
+		// parse the student file data
+		const PDATA = JSON.parse(rData);
+		// get the school from the request
+		const SCHOOL = request.body['school'];
+		// check if the school already exists for response status
+		const HEADER_STATUS = (PDATA.hasOwnProperty(SCHOOL) ? HEADER_OK : HEADER_CREATE);
+		// update that school in the student data
+		PDATA[SCHOOL] = request.body['n_students'];
+		// write the updated data
+		fs.writeFile('students.json', JSON.stringify(PDATA), function (err) {
+			// log error and stop if error
+			if (err) return console.error(err);
+			console.log('updated students.json');
+			// respond the update too
+			response.writeHead(HEADER_STATUS, PLAIN_TEXT_CONTENT);
+			response.end(['updated', SCHOOL, 'to', PDATA[SCHOOL], 'students'].join(' '));
+		});
+
 	}); // handleReadFile('students.json', ...
-}); // app.get('/list-students/', ..
-
-// start the server's listening
-let server = app.listen(PORT_NO, function () {
-	// report the host address and port
-	let host = server.address().address;
-	let port = server.address().port;
-	console.log('student app listening at http://%s:%s . . .',
-		host, port
-	);
 });
+
+// start the SERVER listening
+const SERVER = APP.listen(PORT_NO, function () {
+	// report the host address and port
+	const HOST = SERVER.address().address;
+	const PORT = SERVER.address().port;
+	console.log('student app listening at http://%s:%s . . .',
+		HOST, PORT
+	);
+}); // APP.listen(PORT_NO ... )
 
 console.log('Done.');
 
@@ -98,16 +132,16 @@ function handleReadFile(file, callback) {
 /// handles errors, logging while reading all files in array files
 function handleReadMoreFiles(files, errArr, dataArr, callback) {
 	// shift file 0
-	let file0 = files.shift();
+	const FILE0 = files.shift();
 
 	// base case: if file 0 defined
-	if (!file0) {
+	if (!FILE0) {
 		// if no file 0, then callback
 		return callback(errArr, ...dataArr);
 	} // if (!file0)
 
 	// inductive step: read the file
-	handleReadFile(file0, function (err, data) {
+	handleReadFile(FILE0, function (err, data) {
 		// push the error message and data
 		errArr.push(err);
 		dataArr.push(data);
@@ -115,4 +149,22 @@ function handleReadMoreFiles(files, errArr, dataArr, callback) {
 		handleReadMoreFiles(files, errArr, dataArr, callback);
 	}); // handleReadFile(file0, ...
 } // function handleReadMoreFiles(files, errArr, dataArr, callback)
+
+/// creates a callback that reads a file and sends it in response to a
+/// resource request
+function setReadtoEndon(eventfunc, resource, file, contentType) {
+	// bind the event function with its event object
+	return eventfunc.bind(this)(resource, 
+		function callback(_, response) {
+			console.log('requested', resource);
+			// open and read the students file
+			handleReadFile(file, function (_, data) {
+				// send plain text with OK status header
+				response.writeHead(HEADER_OK, contentType);
+				// send the data read
+				response.end(data.toString());
+			}); // handleReadFile('students.json', ...
+		} // return function callback(_, response)
+	); // eventfunc.bind(this)(resource, ...
+} // function setReadtoEndon(resource, file, contentType)
 

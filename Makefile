@@ -11,7 +11,7 @@ node_modules/fs/:
 	npm install fs
 
 node_modules/body-parser/:
-	npm install body-parder
+	npm install body-parser
 
 # cleans, then installs dependencies
 clean-build: clean all
